@@ -1,6 +1,6 @@
 # Color Sequence Puzzle
 
-![Color Sequence Puzzle Banner](/api/placeholder/850/250)
+![Color Sequence Puzzle Banner](./Screenshot 2025-03-21.png)
 
 ## Overview
 
