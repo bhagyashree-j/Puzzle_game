@@ -1,5 +1,5 @@
 # Color Sequence Puzzle
-![Color Sequence Puzzle Banner]("./Screenshot 2025-03-21.png")
+![Color Sequence Puzzle Banner](./img.png)
 
 ## Overview
 
