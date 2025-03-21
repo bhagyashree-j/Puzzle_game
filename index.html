@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Sequence Puzzle</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f5ff;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: #333;
+    }
+    
+    .container {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      max-width: 650px;
+      width: 100%;
+      text-align: center;
+    }
+    
+    h1 {
+      color: #4a6ee0;
+      margin-bottom: 10px;
+    }
+    
+    .level-display {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #555;
+    }
+    
+    .pattern-display {
+      display: flex;
+      justify-content: center;
+      margin: 30px 0;
+      gap: 10px;
+    }
+    
+    .color-dot {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 2px solid #ddd;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .color-buttons {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .color-button {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s;
+    }
+    
+    .color-button:hover {
+      transform: scale(1.1);
+    }
+    
+    .player-sequence {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+      gap: 10px;
+    }
+    
+    .player-dot {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #eee;
+      border: 2px dashed #ccc;
+    }
+    
+    button {
+      background-color: #4a6ee0;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 25px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px;
+      transition: background-color 0.3s;
+    }
+    
+    button:hover {
+      background-color: #3857b8;
+    }
+    
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .message {
+      margin: 20px 0;
+      font-weight: bold;
+      min-height: 25px;
+    }
+    
+    .success {
+      color: #2ecc71;
+    }
+    
+    .error {
+      color: #e74c3c;
+    }
+    
+    .rules {
+      text-align: left;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+    }
+    
+    .timer {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    
+    .hint-button {
+      background-color: #f39c12;
+    }
+    
+    .hint-button:hover {
+      background-color: #e67e22;
+    }
+    
+    @media (max-width: 600px) {
+      .color-dot {
+        width: 40px;
+        height: 40px;
+      }
+      
+      .color-button {
+        width: 50px;
+        height: 50px;
+      }
+      
+      .player-dot {
+        width: 30px;
+        height: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Color Sequence Puzzle</h1>
+    <div class="level-display">Level <span id="level">1</span></div>
+    <div class="timer">Time: <span id="timer">00:00</span></div>
+    
+    <div class="message" id="message"></div>
+    
+    <div class="pattern-display" id="pattern-display"></div>
+    
+    <div class="color-buttons" id="color-buttons">
+      <button class="color-button" style="background-color: #e74c3c;" data-color="#e74c3c"></button>
+      <button class="color-button" style="background-color: #2ecc71;" data-color="#2ecc71"></button>
+      <button class="color-button" style="background-color: #3498db;" data-color="#3498db"></button>
+      <button class="color-button" style="background-color: #f1c40f;" data-color="#f1c40f"></button>
+      <button class="color-button" style="background-color: #9b59b6;" data-color="#9b59b6"></button>
+      <button class="color-button" style="background-color: #1abc9c;" data-color="#1abc9c"></button>
+    </div>
+    
+    <div class="player-sequence" id="player-sequence"></div>
+    
+    <div>
+      <button id="submit-btn" disabled>Submit Sequence</button>
+      <button id="reset-btn">Reset</button>
+      <button id="hint-btn" class="hint-button">Use Hint (3 available)</button>
+    </div>
+    
+    <div class="rules">
+      <h3>How to Play:</h3>
+      <p>1. Memorize the color pattern that appears.</p>
+      <p>2. The pattern will disappear after a few seconds.</p>
+      <p>3. Recreate the pattern by clicking the colored buttons.</p>
+      <p>4. Click Submit to check your answer.</p>
+      <p>5. Each level adds one more color to the sequence.</p>
+      <p>6. You have 3 hints available that will reveal the pattern again.</p>
+    </div>
+  </div>
+
+  <script>
+    // Game state
+    const colors = ['#e74c3c', '#2ecc71', '#3498db', '#f1c40f', '#9b59b6', '#1abc9c'];
+    let currentLevel = 1;
+    let patternSequence = [];
+    let playerSequence = [];
+    let hintsRemaining = 3;
+    let startTime;
+    let timerInterval;
+    let canAddColor = false;
+    
+    // DOM elements
+    const patternDisplay = document.getElementById('pattern-display');
+    const playerSequenceEl = document.getElementById('player-sequence');
+    const messageEl = document.getElementById('message');
+    const levelEl = document.getElementById('level');
+    const submitBtn = document.getElementById('submit-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const hintBtn = document.getElementById('hint-btn');
+    const timerEl = document.getElementById('timer');
+    
+    // Initialize the game
+    initializeGame();
+    
+    function initializeGame() {
+      startTime = new Date();
+      updateTimer();
+      timerInterval = setInterval(updateTimer, 1000);
+      
+      // Set up color buttons
+      const colorButtons = document.getElementById('color-buttons');
+      colorButtons.addEventListener('click', function(e) {
+        if (e.target.classList.contains('color-button') && canAddColor) {
+          const color = e.target.getAttribute('data-color');
+          addColorToPlayerSequence(color);
+        }
+      });
+      
+      // Set up other buttons
+      submitBtn.addEventListener('click', checkSequence);
+      resetBtn.addEventListener('click', resetPlayerSequence);
+      hintBtn.addEventListener('click', showHint);
+      
+      // Start first level
+      startLevel();
+    }
+    
+    function updateTimer() {
+      const currentTime = new Date();
+      const elapsedTime = Math.floor((currentTime - startTime) / 1000);
+      const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+      const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+      timerEl.textContent = `${minutes}:${seconds}`;
+    }
+    
+    function startLevel() {
+      levelEl.textContent = currentLevel;
+      canAddColor = false;
+      
+      // Generate pattern
+      patternSequence = [];
+      for (let i = 0; i < currentLevel + 2; i++) {
+        const randomIndex = Math.floor(Math.random() * colors.length);
+        patternSequence.push(colors[randomIndex]);
+      }
+      
+      // Reset player sequence
+      resetPlayerSequence();
+      
+      // Show pattern
+      showPattern();
+    }
+    
+    function showPattern() {
+      // Clear previous pattern
+      patternDisplay.innerHTML = '';
+      messageEl.textContent = 'Memorize this pattern!';
+      messageEl.className = 'message';
+      
+      // Create dots for the pattern
+      patternSequence.forEach(color => {
+        const dot = document.createElement('div');
+        dot.className = 'color-dot';
+        dot.style.backgroundColor = color;
+        patternDisplay.appendChild(dot);
+      });
+      
+      // Hide pattern after delay based on level
+      const displayTime = 1000 + (currentLevel * 500);
+      setTimeout(() => {
+        patternDisplay.innerHTML = '';
+        messageEl.textContent = 'Now recreate the pattern!';
+        canAddColor = true;
+      }, displayTime);
+    }
+    
+    function addColorToPlayerSequence(color) {
+      if (playerSequence.length < patternSequence.length) {
+        playerSequence.push(color);
+        updatePlayerSequenceDisplay();
+        
+        if (playerSequence.length === patternSequence.length) {
+          submitBtn.disabled = false;
+        }
+      }
+    }
+    
+    function updatePlayerSequenceDisplay() {
+      playerSequenceEl.innerHTML = '';
+      
+      playerSequence.forEach(color => {
+        const dot = document.createElement('div');
+        dot.className = 'player-dot';
+        dot.style.backgroundColor = color;
+        dot.style.borderStyle = 'solid';
+        playerSequenceEl.appendChild(dot);
+      });
+      
+      // Add empty dots for remaining spaces
+      for (let i = playerSequence.length; i < patternSequence.length; i++) {
+        const emptyDot = document.createElement('div');
+        emptyDot.className = 'player-dot';
+        playerSequenceEl.appendChild(emptyDot);
+      }
+    }
+    
+    function resetPlayerSequence() {
+      playerSequence = [];
+      updatePlayerSequenceDisplay();
+      submitBtn.disabled = true;
+    }
+    
+    function checkSequence() {
+      let correct = true;
+      
+      for (let i = 0; i < patternSequence.length; i++) {
+        if (patternSequence[i] !== playerSequence[i]) {
+          correct = false;
+          break;
+        }
+      }
+      
+      if (correct) {
+        messageEl.textContent = 'Correct! Moving to next level.';
+        messageEl.className = 'message success';
+        currentLevel++;
+        
+        setTimeout(() => {
+          startLevel();
+        }, 1500);
+      } else {
+        messageEl.textContent = 'Incorrect! Try again.';
+        messageEl.className = 'message error';
+        showCorrectPattern();
+        
+        setTimeout(() => {
+          resetPlayerSequence();
+          canAddColor = true;
+        }, 2000);
+      }
+    }
+    
+    function showCorrectPattern() {
+      patternDisplay.innerHTML = '';
+      
+      patternSequence.forEach((correctColor, index) => {
+        const dot = document.createElement('div');
+        dot.className = 'color-dot';
+        dot.style.backgroundColor = correctColor;
+        
+        // Highlight incorrect answers
+        if (index < playerSequence.length && playerSequence[index] !== correctColor) {
+          dot.style.border = '2px solid #e74c3c';
+          dot.style.boxShadow = '0 0 8px #e74c3c';
+        }
+        
+        patternDisplay.appendChild(dot);
+      });
+    }
+    
+    function showHint() {
+      if (hintsRemaining > 0) {
+        hintsRemaining--;
+        hintBtn.textContent = `Use Hint (${hintsRemaining} available)`;
+        
+        if (hintsRemaining === 0) {
+          hintBtn.disabled = true;
+        }
+        
+        canAddColor = false;
+        showPattern();
+      }
+    }
+  </script>
+</body>
+</html>
